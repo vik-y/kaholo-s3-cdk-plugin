@@ -1,0 +1,40 @@
+{
+  "name": "AWS-S3-CDK",
+  "type": "executer",
+  "execProgram": "node",
+  "main": "app.js",
+  "version": "1.1.2",
+  "imgUrl": "logo.png",
+  "category": ["INFRASTRUCTURE MGMT", "CI/CD"],
+  "keywords": ["cloud", "cli", "container", "infra", "infrastructure", "platform", "manage", "cluster", "vm", "instance"],
+  "description": "Kaholo plaugin for integration with Terraform CLI.",
+  "methods": [
+    {
+      "name": "createBucket",
+      "viewName": "Create Bucket",
+      "params": [
+        {
+          "name": "BUCKET_NAME",
+          "viewName": "Bucket Name",
+          "type": "string",
+          "description": "Bucket name conforming to s3 bucket naming convention",
+          "placeholder": "test-bucket",
+          "learnUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html#:~:text=The%20following%20rules%20apply%20for,with%20a%20letter%20or%20number."
+        },
+        {
+          "name": "PUBLIC",
+          "viewName": "public",
+          "type": "boolean",
+          "description": "Should this bucket allow public access?",
+          "learnUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+        }, 
+        {
+          "name": "NEW_USER_NAME", 
+          "viewName": "Bucket Owner User (new)", 
+          "type": "string", 
+          "description": "Leave this empty if you dont want to create a new user. If you provide a username we will create a new user with full access to this s3 bucket"
+        }
+      ]
+    }
+  ]
+}

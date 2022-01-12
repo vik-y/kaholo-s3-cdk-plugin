@@ -6,7 +6,18 @@
   "version": "1.1.2",
   "imgUrl": "logo.png",
   "category": ["INFRASTRUCTURE MGMT", "CI/CD"],
-  "keywords": ["cloud", "cli", "container", "infra", "infrastructure", "platform", "manage", "cluster", "vm", "instance"],
+  "keywords": [
+    "cloud",
+    "cli",
+    "container",
+    "infra",
+    "infrastructure",
+    "platform",
+    "manage",
+    "cluster",
+    "vm",
+    "instance"
+  ],
   "description": "Kaholo plaugin for integration with Terraform CLI.",
   "methods": [
     {
@@ -27,12 +38,30 @@
           "type": "boolean",
           "description": "Should this bucket allow public access?",
           "learnUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
-        }, 
+        },
         {
-          "name": "NEW_USER_NAME", 
-          "viewName": "Bucket Owner User (new)", 
-          "type": "string", 
+          "name": "NEW_USER_NAME",
+          "viewName": "Bucket Owner User (new)",
+          "type": "string",
           "description": "Leave this empty if you dont want to create a new user. If you provide a username we will create a new user with full access to this s3 bucket"
+        },
+        {
+          "name": "VERSIONED",
+          "viewName": "DO you want to enable versioning?",
+          "type": "boolean",
+          "required": true,
+          "default": true
+        },
+        {
+          "name": "ACCESS_KEY_ID",
+          "viewName": "Aws access key id",
+          "type": "vault"
+        },
+        {
+          "name": "ACCESS_KEY_SECRET",
+          "viewName": "Aws access key secret",
+          "type": "vault",
+          "required": true
         }
       ]
     }

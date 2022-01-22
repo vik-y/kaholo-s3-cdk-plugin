@@ -5,7 +5,36 @@ const fs = require("fs");
  * @param {String} cmd Command to run
  * @param {String} path Working directory inside which to run the command. We try to create this directory if it doesn't exist
  */
-function runCommand(cmd, path, env = {}, stdio = "pipe") {
+
+function runCommandSpawn(exe, params, path, env = {}) {
+  /**
+   * Uses spawnSync to run commands
+   */
+
+  child_process.spawnSync("npm", ["install"], {
+    cwd: path,
+    stdio: "inherit",
+    encoding: "utf-8",
+  });
+  const result = child_process.spawnSync(exe, params, {
+    cwd: path,
+    stdio: "inherit",
+    encoding: "utf-8",
+    env: env,
+    shell: "bash",
+  });
+
+  if (result.status != 0) {
+    throw new Error(
+      `Failed to run command ${exe} ${params} with exit status ${result.status}`
+    );
+  }
+}
+
+function runCommand(cmd, path, env = {}, stdio = "inherit") {
+  /**
+   * Uses execSync to run the commands
+   */
   if (!path) {
     throw "Path was not provided!";
   }
@@ -24,92 +53,31 @@ function initDir(path) {
   runCommand(`mkdir -p ${path}`, "/tmp");
 }
 
-function cloneCode(repo_url, base_path) {
-  // clone code or download tar
-  const cmd = `git clone ${repo_url}`;
-  runCommand(cmd, base_path);
-}
-
 function runCdk(action, path) {
-  // Install pre-req utilities
-  // This is to download cdk code. Will probably host it somewhere else and use wget
-  const gdriveFileId = "1162BH9j8EVq2Ylse7xQKdWBgAul1h3fL";
-  runCommand(
-    "apt update && apt install -y python-pip && pip install gdown",
-    path
-  );
-
+  // Set env for the process to use
   const env = {
     ...process.env,
     AWS_ACCESS_KEY_ID: action.params.ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: action.params.ACCESS_KEY_SECRET,
+    NPM_CONFIG_UNSAFE_PERM: true,
   };
 
-  // Donwload and extract cdk code
-  runCommand(
-    `gdown --id ${gdriveFileId} && unzip -o s3-cdk.zip`,
-    path,
-    (stdio = "ignore")
-  );
-  // npm install
-
-  runCommand(`cat params.json`, path);
-
   const stackName = `${action.params.BUCKET_NAME}-stack`;
-  //runCommand
-  runCommand(`ln -sf /usr/local/bin/nodejs /usr/bin/node`, path);
-  runCommand(`rm package-lock.json && rm -rf node_modules`, path);
-  runCommand(`npm install cdk`, path);
-  //runCommand(`npm install`, path);
 
-  const out = child_process.spawnSync("npm", ["install"], {
-    cwd: path,
-    stdio: "pipe",
-    encoding: "utf-8",
-  });
-
-  // console.log(out);
-
-  // const temp = child_process.spawnSync("env", {
-  //   cwd: path,
-  //   env: env,
-  //   stdio: "pipe",
-  // });
-
-  // console.log(temp);
-
-  // child_process.spawnSync("env", {
-  //   cwd: path,
-  //   env: env,
-  //   stdio: "pipe",
-  // });
-
-  const temp = child_process.spawnSync("/usr/local/bin/cdk", ["bootstrap"], {
-    cwd: path,
-    stdio: "pipe",
-    encoding: "utf-8",
-    env: env,
-  });
-
-  console.log(temp);
-
-  const child = child_process.spawnSync(
+  runCommandSpawn("/usr/local/bin/npm", ["install", "-g", "cdk"], path);
+  runCommandSpawn(
+    "/usr/local/bin/npm",
+    ["--scripts-prepend-node-path=true", "install"],
+    path,
+    env
+  );
+  runCommandSpawn("/usr/local/bin/cdk", ["bootstrap"], path, env);
+  runCommandSpawn(
     "/usr/local/bin/cdk",
     ["deploy", "--require-approval", "never"],
-    {
-      cwd: path,
-      stdio: "pipe",
-      encoding: "utf-8",
-      env: env,
-    }
+    path,
+    env
   );
-
-  console.log(child);
-
-  // create env
-
-  // cdk bootstrap
-  // cdk deploy
 }
 
 /**
@@ -117,13 +85,19 @@ function runCdk(action, path) {
  * @param {*} action Action passed by the kaholo pipeline
  */
 function extractParamsToJson(action, path) {
-  const params = JSON.stringify(action.params);
+  // Making a copy of the params
+  const params = JSON.parse(JSON.stringify(action.params));
+
+  // and deleting sensitive data from it before writing params to file
+  delete params["ACCESS_KEY_ID"];
+  delete params["ACCESS_KEY_SECRET"];
+
+  const paramsData = JSON.stringify(params);
   const filename = `${path}/params.json`;
-  fs.writeFileSync(filename, params);
+  fs.writeFileSync(filename, paramsData);
 }
 
 module.exports = {
-  cloneCode,
   extractParamsToJson,
   runCdk,
   initDir,
